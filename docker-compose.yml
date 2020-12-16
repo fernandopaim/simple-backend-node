@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+    backend:
+        image: node
+        container_name: backend
+        restart: unless-stopped
+        env_file: .env
+        environment:
+            - NODE_ENV
+            - DEBUG
+            - MONGO_USERNAME
+            - MONGO_PASSWORD
+            - MONGO_PORT
+            - MONGO_DB
+            - MONGO_HOSTNAME=db
+        user: "node"
+        working_dir: /home/node/app
+        volumes:
+            - ./backend:/home/node/app
+        depends_on:
+            - db
+        expose:
+            - "3000"
+        ports:
+            - "3000:3000"
+        command: "npm run dev"
+        # command: ./wait-for.sh db:27017 -- /home/node/app/node_modules/.bin/nodemon app.js
+
+    db:
+        image: mongo:4.1.8-xenial
+        container_name: db
+        restart: unless-stopped
+        env_file: .env
+        environment:
+            - MONGO_INITDB_ROOT_USERNAME=$MONGO_USERNAME
+            - MONGO_INITDB_ROOT_PASSWORD=$MONGO_PASSWORD
+        volumes:
+            - ./backend/data:/data/db
+
+    frontend:
+        image: node
+        container_name: frontend
+        restart: unless-stopped
+        user: "node"
+        working_dir: /home/node/app
+        volumes:
+            - ./frontend:/home/node/app
+        depends_on:
+            - db
+        expose:
+            - "8080"
+        ports:
+            - "8080:8080"
+        command: "npm run start"
